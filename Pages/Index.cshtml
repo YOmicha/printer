@@ -1,0 +1,285 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "ZPL File Viewer";
+}
+
+<div class="container mt-4">
+    <h1 class="text-center mb-4">ZPL File Viewer</h1>
+
+    <div class="row">
+        <!-- File Upload Section -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Upload ZPL File</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label for="zplFile" class="form-label">Select a .txt file containing ZPL commands:</label>
+                            <input type="file" class="form-control" id="zplFile" name="ZplFile" accept=".txt" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Preview Settings:</label>
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <label for="dpmm" class="form-label">Print Density (dpmm):</label>
+                                    <select class="form-select" id="dpmm">
+                                        <option value="8">8 dpmm (203 dpi)</option>
+                                        <option value="12">12 dpmm (300 dpi)</option>
+                                        <option value="24">24 dpmm (600 dpi)</option>
+                                    </select>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="labelWidth" class="form-label">Label Width (inches):</label>
+                                    <input type="number" class="form-control" id="labelWidth" value="4" min="1" max="8" step="0.1">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload and Preview</button>
+                    </form>
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger mt-3" role="alert">
+                            @Model.ErrorMessage
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+                    {
+                        <div class="alert alert-success mt-3" role="alert">
+                            @Model.SuccessMessage
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ZplContent))
+            {
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Printer Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="printerForm">
+                            @Html.AntiForgeryToken()
+                            <div class="mb-3">
+                                <label class="form-label">Connection Type:</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="connectionType" id="networkConnection" value="network" checked>
+                                    <label class="form-check-label" for="networkConnection">
+                                        Network Printer
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="connectionType" id="serialConnection" value="serial">
+                                    <label class="form-check-label" for="serialConnection">
+                                        USB/Serial Port
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="networkSettings">
+                                <div class="mb-3">
+                                    <label for="printerIp" class="form-label">Printer IP Address:</label>
+                                    <input type="text" class="form-control" id="printerIp" name="PrinterIp" value="@Model.PrinterIp" required 
+                                           pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="printerPort" class="form-label">Network Port:</label>
+                                    <input type="number" class="form-control" id="printerPort" name="PrinterPort" value="@Model.PrinterPort" required>
+                                </div>
+                            </div>
+
+                            <div id="serialSettings" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="serialPort" class="form-label">Select Port:</label>
+                                    <select class="form-select" id="serialPort" name="SerialPort">
+                                        <option value="">Select a port...</option>
+                                        @foreach (var port in Model.AvailablePorts)
+                                        {
+                                            <option value="@port">@port</option>
+                                        }
+                                    </select>
+                                    @if (!Model.AvailablePorts.Any())
+                                    {
+                                        <div class="form-text text-warning">No serial ports detected</div>
+                                    }
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-success" onclick="printLabel()">
+                                <i class="bi bi-printer"></i> Print Label
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">ZPL Code</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="bg-light p-3 rounded" style="font-family: monospace; white-space: pre-wrap;">
+                            @Model.ZplContent
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Preview Section -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Label Preview</h5>
+                </div>
+                <div class="card-body text-center">
+                    @if (!string.IsNullOrEmpty(Model.ZplContent))
+                    {
+                        <div id="previewContainer" class="bg-light p-3 rounded">
+                            <img id="labelPreview" class="img-fluid" alt="Label Preview">
+                            <div class="mt-3">
+                                <button class="btn btn-secondary" onclick="refreshPreview()">Refresh Preview</button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted">
+                            <p>No ZPL content to preview. Please upload a file.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const zplContent = @Json.Serialize(Model.ZplContent);
+
+        // Toggle connection settings visibility
+        document.querySelectorAll('input[name="connectionType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const isNetwork = this.value === 'network';
+                document.getElementById('networkSettings').style.display = isNetwork ? 'block' : 'none';
+                document.getElementById('serialSettings').style.display = isNetwork ? 'none' : 'block';
+            });
+        });
+
+        function refreshPreview() {
+            if (!zplContent) return;
+
+            const dpmm = document.getElementById('dpmm').value;
+            const labelWidth = document.getElementById('labelWidth').value;
+            const labelHeight = 6; // Fixed height, you can make this configurable too
+
+            // Construct the preview URL for Labelary API
+            const apiUrl = `https://api.labelary.com/v1/printers/${dpmm}dpmm/labels/${labelWidth}x${labelHeight}/0/`;
+
+            // Send request to Labelary API
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: zplContent
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(imageBlob => {
+                const imageUrl = URL.createObjectURL(imageBlob);
+                document.getElementById('labelPreview').src = imageUrl;
+            })
+            .catch(error => {
+                console.error('Error generating preview:', error);
+                alert('Error generating preview. Please check your ZPL code and try again.');
+            });
+        }
+
+        async function printLabel() {
+            const useSerialPort = document.getElementById('serialConnection').checked;
+            const printerIp = document.getElementById('printerIp').value;
+            const printerPort = document.getElementById('printerPort').value;
+            const serialPort = document.getElementById('serialPort').value;
+
+            if (useSerialPort && !serialPort) {
+                alert('Please select a serial port');
+                return;
+            }
+
+            if (!useSerialPort && (!printerIp || !printerPort)) {
+                alert('Please enter printer IP and port');
+                return;
+            }
+
+            if (!zplContent) {
+                alert('No ZPL content available. Please upload a file first.');
+                return;
+            }
+
+            try {
+                const response = await fetch('?handler=Print', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({
+                        printerIp: printerIp,
+                        printerPort: parseInt(printerPort),
+                        serialPort: serialPort,
+                        zplContent: zplContent,
+                        useSerialPort: useSerialPort
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Print job sent successfully!');
+                } else {
+                    alert('Error sending print job: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error sending print job. Please check the console for details.');
+            }
+        }
+
+        // Initial preview
+        if (zplContent) {
+            refreshPreview();
+        }
+
+        // Refresh preview when settings change
+        document.getElementById('dpmm').addEventListener('change', refreshPreview);
+        document.getElementById('labelWidth').addEventListener('change', refreshPreview);
+    </script>
+}
+
+@section Styles {
+    <style>
+        .card {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            background-color: #f8f9fa;
+        }
+        #labelPreview {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            background: white;
+        }
+        #previewContainer {
+            min-height: 200px;
+        }
+    </style>
+}

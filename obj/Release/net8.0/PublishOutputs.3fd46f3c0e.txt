@@ -1,0 +1,15 @@
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/printer
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/appsettings.Development.json
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/appsettings.json
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/printer.dll
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/printer.deps.json
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/printer.runtimeconfig.json
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/printer.pdb
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/System.IO.Ports.dll
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/runtimes/linux-arm/native/libSystem.IO.Ports.Native.so
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/runtimes/linux-arm64/native/libSystem.IO.Ports.Native.so
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/runtimes/linux-x64/native/libSystem.IO.Ports.Native.so
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/runtimes/osx-arm64/native/libSystem.IO.Ports.Native.dylib
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/runtimes/osx-x64/native/libSystem.IO.Ports.Native.dylib
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/runtimes/unix/lib/net8.0/System.IO.Ports.dll
+/Users/nuevousuario/Documents/personal/jessica/printer/printer/publish/runtimes/win/lib/net8.0/System.IO.Ports.dll
